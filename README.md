@@ -16,7 +16,7 @@
 Макрос `declare_class` позволяет определить класс, его суперклассы и его атрибуты. 
 Сигнатура вызова:
 ```clojure
-(declare_class class_name (list_of_superclasses) (list_of_attributes))
+(declare_class class_name [vector_of_attributes] & [vector_of_superclasses])
 ```
 `list_of_superclasses` - спискок суперклассов. Допускается множественное наследование. Все классы связаны одной иерархией наследования, так как все классы явно или неявно наследуют самый общий тип T (аналог Object в java). Если `(list_of_superclasses)` отсутствует, то предполагается, что тип является потомком общего T.
 
@@ -31,39 +31,39 @@
 
 **Пример объявления классов:**
 ```clojure
-(declare_class message (
-  (message (:default_value "it's me"))
-  (message_count (:default_value 0))
-  (additional_message)
-  )
+(declare_class "message" [
+  [:message (default_value "it's me")]
+  [:message_count (default_value 0)]
+  [:additional_message]
+  ]
 )
 
-(declare_class hello_message (message) (
-  (hello_message (:default_value "hello"))
-  )
+(declare_class "hello_message" [
+  [:hello_message (default_value "hello")]
+  ] ["message"]
 )
 
-(declare_class goodbye_message (message) (
-  (goodbye_message (:default_value "bye"))
-  )
+(declare_class "goodbye_message" [
+  [:goodbye_message (default_value "bye")]
+  ] ["message"]
 )
 ```
 
 ### Создание объекта
-Метод 'new' позволяет создать объект заданного класса. Сигнатура метода приведена ниже:
+Метод 'new_obj' позволяет создать объект заданного класса. Сигнатура метода приведена ниже:
 ```clojure
-(new class_name)
+(new_obj class_name)
 ```
 
 ### Работа с атрибутами
 Для работы с атрибутами необходимы методы чтения и записи значения в атрибут.
-Если не установлено значение атрибута по умолчанию, метод чтения вернет специальное значение `null`, означающее, что значение не задано.
+Если не установлено значение атрибута по умолчанию, метод чтения вернет специальное значение `nil`, означающее, что значение не задано.
 
 Сигнатура метода чтения:
 ```clojure
 (get_value class_object attribute_name)
 ```
-Метод записи значения возвращает фактически записанное в атрибут значение. Сигнатура метода записи значения в атрибут:
+Метод записи значения возвращает объект, в который была проведена запись. Сигнатура метода записи значения в атрибут:
 ```clojure
 (set_value class_object attribute_name new_value_name)
 ```
@@ -77,14 +77,14 @@
 **Пример работы с атрибутами**
 ```clojure
 (let base_object (new message) 
-  (get_value base_object message) ; returns "it's me" 
-  (get_value base_object additional_message)  ; returns null
+  (get_value base_object :message) ; returns "it's me" 
+  (get_value base_object :additional_message)  ; returns nil
   
-  (set_value base_object message "new message!") ; returns "new message!" 
-  (set_value base_object additional_message "it's not empty now")  ; returns "it's not empty now"
+  (set_value base_object :message "new message!") ; returns "new message!" 
+  (set_value base_object :additional_message "it's not empty now")  ; returns "it's not empty now"
   
-  (get_value base_object message) ; returns "new message!" 
-  (get_value base_object additional_message)  ; returns "it's not empty now"
+  (get_value base_object :message) ; returns "new message!" 
+  (get_value base_object :additional_message)  ; returns "it's not empty now"
                    
 )
 ```

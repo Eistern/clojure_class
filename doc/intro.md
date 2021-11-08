@@ -1,3 +1,3 @@
-# Introduction to clojure_class
+# Introduction to clazz
 
 TODO: write [great documentation](http://jacobian.org/writing/what-to-write/)

@@ -3,8 +3,9 @@
 
 (defn declare_class!
   "Add entry to the class map. class_name will be used as the key, and it will be used in the `new_obj` function"
-  [class_name vector_of_attributes & list_of_superclasses]
-  (shared/add_class! class_name vector_of_attributes list_of_superclasses)
+  ([class_name vector_of_attributes list_of_superclasses]
+  (shared/add_class! class_name vector_of_attributes list_of_superclasses))
+  ([class_name vector_of_attributes] (declare_class! class_name vector_of_attributes ["T"]))
   )
 
 (defn default_value

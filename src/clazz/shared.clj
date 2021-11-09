@@ -29,12 +29,13 @@
       [
        inherited_attributes
        (reduce
-         #(conj %1 ((get_class_state_map) %2))
+         #(concat %1 ((get_class_state_map) %2))
          vector_of_attributes
          list_of_superclasses
          )
        ]
       (swap! class_state_map #(assoc %1 class_name inherited_attributes))
+      (println "For class " class_name " added " inherited_attributes)
       )
     )
 

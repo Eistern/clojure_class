@@ -50,4 +50,45 @@
     []
     (println @class_inheritance_map)
     )
+
+  (declare get_child_metric)
+
+  (defn find_last_not_nil_metric [children target_name]
+    (reduce
+      (fn [acc x]
+        (let [c_res (get_child_metric x target_name)]
+          (if (= c_res -1)
+            acc
+            c_res
+            )
+          )
+        ) -1 children)
+    )
+
+  (defn get_child_metric [current_name target_name]
+    (let [children (@class_inheritance_map current_name)]
+      (if (= current_name target_name)
+        0
+        (if (or (= children `()) (= children nil))
+          -1
+          (let
+            [result (find_last_not_nil_metric children target_name)]
+            (if (= result -1)
+              -1
+              (+ result 1)
+              )
+            )
+          )
+        )
+      )
+    )
+
+  (defn get_metric [first_name second_name]
+    (let [first_name_child_metric (get_child_metric first_name second_name)]
+      (if (= first_name_child_metric nil)
+        (get_child_metric second_name first_name)
+        first_name_child_metric
+        )
+      )
+    )
   )

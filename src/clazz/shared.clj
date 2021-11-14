@@ -1,9 +1,13 @@
-(ns clazz.shared)
+(ns clazz.shared
+  (:require [clojure.set :refer :all])
+  )
 
 (let
   [
    class_state_map (atom {"T" []})
    class_inheritance_map (atom {"T" []})
+   generic_functions_map (atom {})
+   declared_methods_map (atom {})
    ]
 
   (defn get_class_state_map
@@ -83,11 +87,116 @@
       )
     )
 
-  (defn get_metric [first_name second_name]
+  (defn get_param_metric [first_name second_name]
     (let [first_name_child_metric (get_child_metric first_name second_name)]
-      (if (= first_name_child_metric nil)
+      (if (= first_name_child_metric -1)
         (get_child_metric second_name first_name)
         first_name_child_metric
+        )
+      )
+    )
+
+  (defn declare_generic! [name params_list]
+    (swap! generic_functions_map #(assoc %1 name params_list))
+    (swap! declared_methods_map #(assoc %1 name []))
+    (println "Created generic function name " name)
+    )
+
+  (defn get_generic_functions
+    []
+    @generic_functions_map
+    )
+
+  (defn get_declared_methods_map
+    []
+    @declared_methods_map
+    )
+
+  (defn params_coincided? [passed_params actual_params]
+    (let [result (count (clojure.set/intersection (set passed_params) (set actual_params)))]
+      (and (= (count passed_params) result) (= (count actual_params) result))
+      )
+    )
+
+  (defn generic_method_exists? [name params]
+    (let [found_params (@generic_functions_map name)]
+      (if (= found_params nil)
+        false
+        (params_coincided? params found_params)
+        )
+      )
+    )
+
+  (defn get_keys_from_list [params]
+    (reduce (fn [acc x] (concat acc (list (first x)))) `() params)
+    )
+
+  (defn declare_method! [name params function]
+    (let [param_names (get_keys_from_list params)]
+      (if (generic_method_exists? name param_names)
+        (swap! declared_methods_map #(assoc %1 name (conj (@declared_methods_map name) (list params function))))
+        (throw (Exception. (str "Undeclared generic " name " with params: " param_names)))
+        )
+      (println "Created generic method impl with name" name)
+      )
+    )
+
+  (defn get_metric [method_params passed_params]
+    (let [method_params_names (get_keys_from_list method_params)
+          passed_params_names (get_keys_from_list passed_params)
+          ]
+        (if (params_coincided? method_params_names passed_params_names)
+          (reduce (fn [acc x]
+                    (let [method_nth (second (nth method_params_names x))
+                          passed_nth (second (nth passed_params_names x))
+                          ]
+                     (+ acc (get_param_metric method_nth passed_nth))
+                     )
+                    )
+                  0
+                  (range 0 (count method_params) 1)
+            )
+          0
+        )
+      )
+    )
+
+  (defn- get_method_name [method_impl]
+    (first method_impl)
+    )
+
+  (defn- get_method_params [method_impl]
+    (first (second method_impl))
+    )
+
+  (defn- get_method_function [method_impl]
+    (second (second method_impl))
+    )
+
+  (defn call [name params]
+    (println "Call")
+    (let [method_impls (@declared_methods_map name)
+          impl_distances []]
+      (map (fn [x]
+             (conj
+               impl_distances
+               (list
+                 (get_metric (get_method_params x) params)
+                 x
+                 )
+               )
+             )
+           method_impls
+           )
+      (println impl_distances)
+      (let [sorted_methods (sort-by first #(compare %2 %1) impl_distances)]
+        (println sorted_methods)
+        (map (fn [x] (
+              ((get_method_function (second x)))
+            )
+          )
+             sorted_methods
+         )
         )
       )
     )

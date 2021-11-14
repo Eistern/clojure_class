@@ -100,14 +100,14 @@
 ### Динамический полиморфизм
 Предлагается реализация `generic functions` (подробнее о [generic-functions](https://gigamonkeys.com/book/object-reorientation-generic-functions.html)). Сигнатура определения такого метода:
 ```clojure
-(declare_generic method_name (list_parameters))
+(declare_generic! "method_name" [list_parameters])
 ```
 `method_name` - имя объявляемого метода
 `list_parameters` - список имен параметров метода
 
 Для объявления конкретного метода для параметров с определенным типом необходимо использовать ``:
 ```clojure
-(declare_method method_name (additional_macros) (list_parameters_with_types))
+(declare_method! "method_name" [additional_macros] [list_parameters_with_types] (fn[] function))
 ```
 `list_parameters_with_types` - список пар имя параметра-тип. Имя метода и его аргуметов должны совпадать с объявленными в `declare_method`.
 `additional_macros` - макросы с дополнительными указаниями для метода. Например, с их помощью можно реализовать `before` и `after` методы.

@@ -145,18 +145,24 @@
     (let [method_params_names (get_keys_from_list method_params)
           passed_params_names (get_keys_from_list passed_params)
           ]
-        (if (params_coincided? method_params_names passed_params_names)
-          (reduce (fn [acc x]
-                    (let [method_nth (second (nth method_params_names x))
-                          passed_nth (second (nth passed_params_names x))
-                          ]
-                     (+ acc (get_param_metric method_nth passed_nth))
-                     )
+      (if (params_coincided? method_params_names passed_params_names)
+        (reduce (fn [acc x]
+                  (if (= acc -1)
+                    acc
+                    (let [method_nth (second (nth method_params x))
+                          passed_nth (second (nth passed_params x))
+                          param_metric (get_child_metric method_nth passed_nth)]
+                      (if (= param_metric -1)
+                        -1
+                        (+ acc param_metric)
+                        )
+                      )
                     )
-                  0
-                  (range 0 (count method_params) 1)
-            )
-          0
+                  )
+                0
+                (range 0 (count method_params) 1)
+                )
+        -1
         )
       )
     )
@@ -173,30 +179,22 @@
     (second (second method_impl))
     )
 
+  (defn get_metric_for_params [params method_impls]
+    (reduce (fn [acc x]
+              (let [p_metric (get_metric (first x) params)]
+                (if (= p_metric -1)
+                  acc
+                  (conj acc (list p_metric x)))
+                )
+              )
+            []
+            method_impls
+      )
+    )
   (defn call [name params]
-    (println "Call")
-    (let [method_impls (@declared_methods_map name)
-          impl_distances []]
-      (map (fn [x]
-             (conj
-               impl_distances
-               (list
-                 (get_metric (get_method_params x) params)
-                 x
-                 )
-               )
-             )
-           method_impls
-           )
-      (println impl_distances)
-      (let [sorted_methods (sort-by first #(compare %2 %1) impl_distances)]
-        (println sorted_methods)
-        (map (fn [x] (
-              ((get_method_function (second x)))
-            )
-          )
-             sorted_methods
-         )
+    (let [impl_distances (get_metric_for_params params (@declared_methods_map name))]
+      (let [sorted_methods (sort-by first impl_distances)]
+        (doall (map (fn [x] ((second (second x)))) sorted_methods))
         )
       )
     )

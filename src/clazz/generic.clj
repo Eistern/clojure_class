@@ -101,10 +101,10 @@
   (defn declare_method!
     "Declare generic function implementation with `name`, `params` parameters with types
     and `function` which will be executed with this implementation"
-    [name params function]
+    [name additional_params params function]
     (let [param_names (get_keys_from_list params)]
       (if (generic_method_exists? name param_names)
-        (swap! declared_generic_impls_map #(assoc %1 name (conj (@declared_generic_impls_map name) (list params function))))
+        (swap! declared_generic_impls_map #(assoc %1 name (conj (@declared_generic_impls_map name) (list params function additional_params))))
         (throw (Exception. (str "Undeclared generic " name " with params: " param_names)))
         )
       (println "Created generic method impl with name" name)
@@ -156,13 +156,29 @@
             method_impls
             )
     )
+
   (defn call
     "Call all suitable generic function implementations for the passed parameters `params` with types.
     The invocation order is determined by the fact how close 'params' types to the particular generic function implementation"
     [name params]
     (let [impl_distances (get_metric_for_params params (@declared_generic_impls_map name))]
-      (let [sorted_methods (sort-by first impl_distances)]
-        (doall (map (fn [x] ((second (second x)))) sorted_methods))
+      (let [sorted_methods (sort-by first impl_distances)
+            call_next (atom (list true))]
+        (doall (map (fn [x]
+                      (do
+                        (if (first @call_next)
+                          ((second (second x)))
+                          ()
+                          )
+
+                        (if (and (first @call_next) (some #(= :call_next %) (nth (second x) 2)))
+                          ()
+                          (do
+                            (swap! call_next #(conj (drop 1 %1) false))
+                            )
+                          )
+                        )
+                      ) sorted_methods))
         )
       )
     )

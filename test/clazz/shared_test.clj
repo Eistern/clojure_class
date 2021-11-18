@@ -49,7 +49,7 @@
   (is (= (generic_method_exists? "m" ["b"]) false))
   )
 
-(declare_method! "method1" [] [["a", "base_class_1"], ["b", "class_with_two_parents"], ["c", "class_with_two_parents"]] (fn[] (println "first to call") (+ 1 1)))
+(declare_method! "method1" [:call_next] [["a", "base_class_1"], ["b", "class_with_two_parents"], ["c", "class_with_two_parents"]] (fn[] (println "first to call") (+ 1 1)))
 (declare_method! "method1" [] [["a", "base_class_1"], ["b", "base_class_1"], ["c", "class_with_two_parents"]] (fn[] (println "second to call") (+ 1 1)))
 (declare_method! "method1" [] [["a", "base_class_1"], ["b", "base_class_1"], ["c", "base_class_1"]] (fn[] (println "third to call") (+ 1 2)))
 (declare_method! "method1" [] [["a", "base_class_2"], ["b", "base_class_1"], ["c", "base_class_1"]] (fn[] (println "don't call me") (+ 1 2)))
@@ -66,4 +66,45 @@
 (call "method1" [["a", "base_class_1"], ["b", "class_with_two_parents"], ["c", "derived_from_two_parents"]])
 
 (deftest test_call
+  )
+
+
+(declare_class!
+  "b1"
+  [
+   [:Attribute1 (default_value 1)]
+   ]
+  )
+
+(declare_class!
+  "b2"
+  []
+  ["b1"]
+  )
+
+(declare_class!
+  "b3"
+  []
+  ["b1"])
+
+(declare_class!
+  "b4"
+  []
+  ["b3"])
+
+(declare_class!
+  "b6"
+  []
+  ["b4"])
+
+(declare_class!
+  "b5"
+  []
+  ["b2", "b6"])
+
+(deftest test_inheritance_metric_one_way_multiple_superclasses
+  (is (= (search_class "b1" "b5") 2))
+  (is (= (search_class "b1" "b4") 2))
+  (is (= (search_class "b1" "b4") 2))
+  (is (= (search_class "b5" "b1") -1))
   )

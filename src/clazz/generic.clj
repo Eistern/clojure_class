@@ -35,7 +35,7 @@
     (reduce
       (fn [acc x]
         (let [c_res (search_class x target_name)]
-          (if (= c_res -1)
+          (if (or (= c_res -1) (and (not= acc -1) (< acc c_res)))
             acc
             c_res
             )

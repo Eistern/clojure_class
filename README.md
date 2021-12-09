@@ -16,13 +16,13 @@
 Макрос `declare_class` позволяет определить класс, его суперклассы и его атрибуты. 
 Сигнатура вызова:
 ```clojure
-(declare_class class_name [vector_of_attributes] & [vector_of_superclasses])
+(declare_class! class_name [vector_of_attributes] [vector_of_superclasses])
 ```
-`list_of_superclasses` - спискок суперклассов. Допускается множественное наследование. Все классы связаны одной иерархией наследования, так как все классы явно или неявно наследуют самый общий тип T (аналог Object в java). Если `(list_of_superclasses)` отсутствует, то предполагается, что тип является потомком общего T.
+`vector_of_superclasses` - спискок суперклассов. Допускается множественное наследование. Все классы связаны одной иерархией наследования, так как все классы явно или неявно наследуют самый общий тип T (аналог Object в java). Если `(list_of_superclasses)` отсутствует, то предполагается, что тип является потомком общего T.
 
-`list_of_attributes` - список атрибутов класса, атрибут задается списком вида:
+`vector_of_attributes` - список атрибутов класса, атрибут задается списком вида:
 ```clojure
-(attr_name (list_init_macros))
+(:attr_name (list_init_macros))
 ```
 `list_init_macros` - список макросов, позволяющий инициализовать переменные, назначать значения по умолчанию и т.д. В дальнейшем можно расширять список макросов для атрибутов для добавления новой функцинальности.
 
@@ -31,7 +31,7 @@
 
 **Пример объявления классов:**
 ```clojure
-(declare_class "message" [
+(declare_class! "message" [
   [:message (default_value "it's me")]
   [:message_count (default_value 0)]
   [:additional_message]
@@ -61,11 +61,11 @@
 
 Сигнатура метода чтения:
 ```clojure
-(get_value class_object attribute_name)
+(get_value class_object :attribute_name)
 ```
 Метод записи значения возвращает объект, в который была проведена запись. Сигнатура метода записи значения в атрибут:
 ```clojure
-(set_value class_object attribute_name new_value_name)
+(set_value! class_object :attribute_name new_value_name)
 ```
 
 Подробнее о праметрах методов:
@@ -76,12 +76,12 @@
 
 **Пример работы с атрибутами**
 ```clojure
-(let base_object (new message) 
+(let base_object (new_obj message) 
   (get_value base_object :message) ; returns "it's me" 
   (get_value base_object :additional_message)  ; returns nil
   
-  (set_value base_object :message "new message!") ; returns "new message!" 
-  (set_value base_object :additional_message "it's not empty now")  ; returns "it's not empty now"
+  (set_value! base_object :message "new message!") ; returns "new message!" 
+  (set_value! base_object :additional_message "it's not empty now")  ; returns "it's not empty now"
   
   (get_value base_object :message) ; returns "new message!" 
   (get_value base_object :additional_message)  ; returns "it's not empty now"
@@ -100,17 +100,17 @@
 ### Динамический полиморфизм
 Предлагается реализация `generic functions` (подробнее о [generic-functions](https://gigamonkeys.com/book/object-reorientation-generic-functions.html)). Сигнатура определения такого метода:
 ```clojure
-(declare_generic! "method_name" [list_parameters])
+(declare_generic! "method_name" [parameters_vector])
 ```
 `method_name` - имя объявляемого метода
-`list_parameters` - список имен параметров метода
+`parameters_vector` - список имен параметров метода
 
 Для объявления конкретного метода для параметров с определенным типом необходимо использовать ``:
 ```clojure
-(declare_method! "method_name" [additional_macros] [list_parameters_with_types] (fn[] function))
+(declare_method! "method_name" [additional_flags] [list_parameters_with_types] (fn[] function))
 ```
-`list_parameters_with_types` - список пар имя параметра-тип. Имя метода и его аргуметов должны совпадать с объявленными в `declare_method`.
-`additional_macros` - макросы с дополнительными указаниями для метода. Например, с их помощью можно реализовать `before` и `after` методы.
+`list_parameters_with_types` - вектор вектор-пар из имени параметра и его типа. Имя метода и его аргуметов должны совпадать с объявленными в `declare_method`.
+`additional_flags` - вектор с дополнительными указаниями для метода. Например, с их помощью можно реализовать `before` и `after` методы, указывать флаг `call_next`
 
 При вызове метода на основе типов его параметров составляется эффективный метод из всех подходящих generic функций.
 Алгоритм построения эффективного метода:
@@ -128,38 +128,36 @@
 Например, Есть классы: A, B (наследник A), C (наследник B). Тогда `dist(A, A) = 0`. `dist(A, B) = 1`. `dist(A, C) = 2`.
 Если есть метод `(declare_method method((a A) (b B)))`, а также непосредственный вызов `method((new A) (new C))`, то `g_metric` типов таких аргументов равен `1`.
 
-Описанный алгоритм подходит для ситуации, когда нет множественного наследования. Для поддржки мнодественного наследования необходима доработка. 
+Для множественного наследования:
 Стоит упорядочивать по следующему правилу: если тип имеет несколько суперклассов, то среди них наиболее близким является указанный первым в списке суперклассов при объявлении `declare_class`.
 
 ### Контроль цепочки вызовов generic методов
 Как уже упоминалось, generic методы вызываются в отсортированном по типам аргументов порядке.
-По умолчанию метод, объявленный `declare_method` не осуществляет такого перехода к следующему методу по порядку. Явный вызов `call-next-method` позволяет перейти к выполнению следующего метода в отсортированном порядке.
+По умолчанию метод, объявленный `declare_method` не осуществляет такого перехода к следующему методу по порядку. Явное указание флага `call-next` для объявления метода позволяет перейти к выполнению следующего метода в отсортированном порядке.
 
 **Приведем пример для пояснения того, как должен работать динамический полиморфизм:**
 ```clojure
-(declare_generic say_something (msg additional_info))
+(declare_generic! "say_something" ["msg" "additional_info"])
 
 ; 1 - Не будет вызван, так как в предыдущем методе не указан call-next-method
-(declare_method say_something ((msg T) (additional_info T))
-                (print_error "don't call me")
+(declare_method! "say_something" [] [["msg" "T"] ["additional_info" "T"]]
+                 (fn[] (print_error "don't call me"))
                 )
 ; 2 - Будет вызван, так как в предыдущем подходящем указан call-next-method
-(declare_method say_something ((msg message) (additional_info T))
-                (println "Third specific")
+(declare_method! "say_something" [] [["msg" "message"] ["additional_info" "T"]]
+                 (fn[] (println "Third specific"))
                 )
 ; 3- Будет вызван, так как в предыдущем подходящем указан call-next-method
-(declare_method say_something ((msg hello_message) (additional_info T))
+(declare_method! "say_something" [:call_next] [["msg" "hello_message"] ["additional_info" "T"]]
                 (println "Second specific")
-                (call-next-method)
                 )
 
 ; Самый подходящий по типам к вызову, будет вызван первым
-(declare_method say_something ((msg hello_message) (additional_info message))
-                (println "The most specific")
-                (call-next-method)
+(declare_method! "say_something" [:call_next] [["msg" "hello_message"] ["additional_info" "message"]]
+                 (fn[] (println "The most specific"))
                 )
 ; Непосредственно вызов с параметрами типа hello_message и message
-(say_something (new hello_message) (new message))
+(call "say_something" [(new_obj "hello_message") (new_obj "message")])
 ```
 
 Ожидаемый вывод:

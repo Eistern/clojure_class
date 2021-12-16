@@ -1,4 +1,4 @@
-(ns clazz.shared_test
+(ns clazz.generic_test
   (:require [clojure.test :refer :all]
             [clazz.base :refer :all]
             [clazz.shared :refer :all]

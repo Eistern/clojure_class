@@ -1,6 +1,7 @@
 (ns clazz.generic
   (:require [clojure.set :refer :all]
-            [clazz.shared :refer :all])
+            [clazz.shared :refer :all]
+            [clazz.base :refer :all])
   )
 
 
@@ -155,6 +156,15 @@
             []
             method_impls
             )
+    )
+
+  (defn get_params_with_types
+    "Map objects to their classnames"
+    [passed_params]
+    (map
+      (fn [[key value]] [key (get_classname value)])
+      passed_params
+      )
     )
 
   (defn call

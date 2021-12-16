@@ -158,7 +158,7 @@
             )
     )
 
-  (defn get_params_with_types
+  (defn- get_params_with_types
     "Map objects to their classnames"
     [passed_params]
     (map
@@ -171,25 +171,33 @@
     "Call all suitable generic function implementations for the passed parameters `params` with types.
     The invocation order is determined by the fact how close 'params' types to the particular generic function implementation"
     [name params]
-    (let [impl_distances (get_metric_for_params params (@declared_generic_impls_map name))]
-      (let [sorted_methods (sort-by first impl_distances)
-            call_next (atom (list true))]
-        (doall (map (fn [x]
-                      (do
-                        (if (first @call_next)
-                          ((second (second x)))
-                          ()
-                          )
+    (let [params_types (get_params_with_types params)]
+      (let [impl_distances (get_metric_for_params params_types (@declared_generic_impls_map name))]
+        (let [sorted_methods (sort-by first impl_distances)
+              call_next (atom (list true))]
+          (doall (map (fn [x]
+                        (do
+                          (if (first @call_next)
+                            ((second (second x)) params)
+                            ()
+                            )
 
-                        (if (and (first @call_next) (some #(= :call_next %) (nth (second x) 2)))
-                          ()
-                          (do
-                            (swap! call_next #(conj (drop 1 %1) false))
+                          (if (and (first @call_next) (some #(= :call_next %) (nth (second x) 2)))
+                            ()
+                            (do
+                              (swap! call_next #(conj (drop 1 %1) false))
+                              )
                             )
                           )
-                        )
-                      ) sorted_methods))
+                        ) sorted_methods))
+          )
         )
       )
     )
+  )
+
+(defn get_param_by_name
+  "Get param object by its name"
+  [name params]
+  (second (first (filter (fn[x] (= name (first x))) params)))
   )

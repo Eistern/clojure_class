@@ -49,10 +49,10 @@
   (is (= (generic_method_exists? "m" ["b"]) false))
   )
 
-(declare_method! "method1" [:call_next] [["a", "base_class_1"], ["b", "class_with_two_parents"], ["c", "class_with_two_parents"]] (fn[] (println "first to call") (+ 1 1)))
-(declare_method! "method1" [] [["a", "base_class_1"], ["b", "base_class_1"], ["c", "class_with_two_parents"]] (fn[] (println "second to call") (+ 1 1)))
-(declare_method! "method1" [] [["a", "base_class_1"], ["b", "base_class_1"], ["c", "base_class_1"]] (fn[] (println "third to call") (+ 1 2)))
-(declare_method! "method1" [] [["a", "base_class_2"], ["b", "base_class_1"], ["c", "base_class_1"]] (fn[] (println "don't call me") (+ 1 2)))
+(declare_method! "method1" [:call_next] [["a", "base_class_1"], ["b", "class_with_two_parents"], ["c", "class_with_two_parents"]] (fn[params] (println "first to call") (println (get_param_by_name "a" params))))
+(declare_method! "method1" [] [["a", "base_class_1"], ["b", "base_class_1"], ["c", "class_with_two_parents"]] (fn[params] (println "second to call") (+ 1 1)))
+(declare_method! "method1" [] [["a", "base_class_1"], ["b", "base_class_1"], ["c", "base_class_1"]] (fn[params] (println "third to call") (+ 1 2)))
+(declare_method! "method1" [] [["a", "base_class_2"], ["b", "base_class_1"], ["c", "base_class_1"]] (fn[params] (println "don't call me") (+ 1 2)))
 
 (deftest test_metric
   (is (= (get_metric [["a", "base_class_1"], ["b", "base_class_1"], ["c", "base_class_1"]] [["a", "base_class_1"], ["b", "base_class_1"], ["c", "base_class_1"]]) 0))
@@ -63,7 +63,7 @@
   (is (= (get_metric [["a", "base_class_1"], ["b", "base_class_1"], ["c", "base_class_1"]] [["a", "derived_from_two_parents"], ["b", "base_class_1"], ["c", "base_class_1"]]) 2))
   )
 
-(call "method1" [["a", "base_class_1"], ["b", "class_with_two_parents"], ["c", "derived_from_two_parents"]])
+(call "method1" [["a", (new_obj "base_class_1")], ["b", (new_obj "class_with_two_parents")], ["c", (new_obj "derived_from_two_parents")]])
 
 (deftest test_call
   )

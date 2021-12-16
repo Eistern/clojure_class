@@ -154,7 +154,7 @@
 
 ; Самый подходящий по типам к вызову, будет вызван первым
 (declare_method! "say_something" [:call_next] [["msg" "hello_message"] ["additional_info" "message"]]
-                 (fn[] (println "The most specific"))
+                 (fn[params] (println "The most specific") (println (get_param_by_name "msg" params)))
                 )
 ; Непосредственно вызов с параметрами типа hello_message и message
 (call "say_something" [(new_obj "hello_message") (new_obj "message")])

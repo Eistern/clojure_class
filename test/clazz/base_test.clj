@@ -46,6 +46,9 @@
   (is (= (get_value (set_value! (new_obj "class") :attribute 1) :attribute) 1))
   )
 
+(deftest classname_test
+  (is (= (get_classname (new_obj "class")) "class")))
+
 (deftest default_value_test
   (is (= (get_value (new_obj "class_with_default_value") :attribute) 1))
   (is (= (get_value (set_value! (new_obj "class_with_default_value") :attribute 2) :attribute) 2))
